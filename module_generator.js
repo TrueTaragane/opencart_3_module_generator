@@ -13,17 +13,70 @@ const Generator = {
         version: '1.0.0',
         author: 'Opencart Club',
         files: {
-            ocmod: true,
+            ocmod: false,
             admin_model: true,
-            catalog_controller: false,
-            catalog_model: false,
-            catalog_view: false,
-            catalog_language: false,
+            catalog_controller: true,
+            catalog_model: true,
+            catalog_view: true,
+            catalog_language: true,
             js: false,
             css: false
         }
     },
     fields: [],
+    codenameManuallyEdited: false, // Track if user manually edited codename
+
+    // Cyrillic to Latin transliteration map
+    translitMap: {
+        'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo', 'ж': 'zh',
+        'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o',
+        'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u', 'ф': 'f', 'х': 'kh', 'ц': 'ts',
+        'ч': 'ch', 'ш': 'sh', 'щ': 'shch', 'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu',
+        'я': 'ya'
+    },
+
+    // Transliterate text to snake_case codename
+    transliterate(text) {
+        if (!text) return '';
+        let result = text.toLowerCase();
+
+        // Replace Cyrillic chars with Latin equivalents
+        for (const [cyr, lat] of Object.entries(this.translitMap)) {
+            result = result.replace(new RegExp(cyr, 'g'), lat);
+        }
+
+        // Replace spaces and dashes with underscores
+        result = result.replace(/[\s\-]+/g, '_');
+
+        // Remove any non-alphanumeric characters except underscore
+        result = result.replace(/[^a-z0-9_]/g, '');
+
+        // Remove multiple underscores
+        result = result.replace(/_+/g, '_');
+
+        // Trim underscores from start/end
+        result = result.replace(/^_+|_+$/g, '');
+
+        return result;
+    },
+
+    // Handle module name input - auto-generate codename if not manually edited
+    onModuleNameInput() {
+        if (!this.codenameManuallyEdited) {
+            const nameInput = document.getElementById('moduleName');
+            const codeInput = document.getElementById('moduleCode');
+            if (nameInput && codeInput) {
+                codeInput.value = this.transliterate(nameInput.value);
+            }
+        }
+        this.updateUI();
+    },
+
+    // Mark codename as manually edited
+    onCodenameInput() {
+        this.codenameManuallyEdited = true;
+        this.updateUI();
+    },
 
     init() {
         this.updateUI();
@@ -223,6 +276,9 @@ const Generator = {
         this.config.theme = (document.getElementById('themeName') ? document.getElementById('themeName').value : 'default') || 'default';
         this.config.jsName = (document.getElementById('customJsName') ? document.getElementById('customJsName').value : '') || this.config.codename;
         this.config.cssName = (document.getElementById('customCssName') ? document.getElementById('customCssName').value : '') || this.config.codename;
+
+        // Description for payment/shipping
+        this.config.description = (document.getElementById('moduleDescription') ? document.getElementById('moduleDescription').value : '') || '';
     },
 
     updateUI() {
@@ -237,6 +293,16 @@ const Generator = {
             this.config.isMultiModule = false;
         }
 
+        // Toggle Description field visibility for payment/shipping
+        const descGroup = document.getElementById('moduleDescriptionGroup');
+        if (descGroup) {
+            if (this.config.type === 'payment' || this.config.type === 'shipping') {
+                descGroup.style.display = 'block';
+            } else {
+                descGroup.style.display = 'none';
+            }
+        }
+
         this.renderFileTree();
         this.renderCodePreview();
     },
@@ -249,11 +315,11 @@ const Generator = {
         const previewElement = document.getElementById('codePreview');
         const codename = this.config.codename;
         const type = this.config.type;
-        const className = this.getClassName(codename, type, 'admin');
+        const controllerClassName = this.getControllerClassName(codename, type);
 
         let code = '';
         if (this.previewFile === 'controller') {
-            code = this.getAdminControllerTemplate(className);
+            code = this.getAdminControllerTemplate(controllerClassName);
         } else if (this.previewFile === 'view') {
             code = this.getAdminViewTemplate();
         } else if (this.previewFile === 'ocmod') {
@@ -409,12 +475,12 @@ const Generator = {
         // All extension types (including theme) have admin section
         const admin = upload.folder("admin");
 
-        // Helper to format class name
-        const className = this.getClassName(codename, type, 'admin');
-        const catalogClassName = this.getClassName(codename, type, 'catalog');
+        // Helper to format class names (same for admin and catalog in OpenCart 3)
+        const controllerClassName = this.getControllerClassName(codename, type);
+        const modelClassName = this.getModelClassName(codename, type);
 
         // Admin Controller
-        admin.file(`controller/extension/${type}/${codename}.php`, this.getAdminControllerTemplate(className));
+        admin.file(`controller/extension/${type}/${codename}.php`, this.getAdminControllerTemplate(controllerClassName));
 
         // Admin Language
         admin.file(`language/en-gb/extension/${type}/${codename}.php`, this.getLanguageTemplate(this.config.name));
@@ -422,7 +488,7 @@ const Generator = {
 
         // Admin Model
         if (this.config.files.admin_model) {
-            admin.file(`model/extension/${type}/${codename}.php`, this.getAdminModelTemplate(className.replace('Controller', 'Model')));
+            admin.file(`model/extension/${type}/${codename}.php`, this.getAdminModelTemplate(modelClassName));
         }
 
         // Admin View
@@ -435,7 +501,7 @@ const Generator = {
             // Catalog Controller
             if (this.config.files.catalog_controller || this.config.generateAjax || this.config.generateEvents) {
                 if (this.config.files.catalog_controller) {
-                    catalog.file(`controller/extension/${type}/${codename}.php`, this.getCatalogControllerTemplate(catalogClassName));
+                    catalog.file(`controller/extension/${type}/${codename}.php`, this.getCatalogControllerTemplate(controllerClassName));
                 }
                 if (this.config.generateAjax) {
                     catalog.file(`controller/extension/${type}/${codename}_api.php`, this.getAjaxControllerTemplate());
@@ -453,7 +519,7 @@ const Generator = {
 
             // Catalog Model
             if (this.config.files.catalog_model) {
-                catalog.file(`model/extension/${type}/${codename}.php`, this.getAdminModelTemplate(catalogClassName.replace('Controller', 'Model')));
+                catalog.file(`model/extension/${type}/${codename}.php`, this.getAdminModelTemplate(modelClassName));
             }
 
             // Catalog View & Assets
@@ -500,18 +566,28 @@ const Generator = {
         link.click();
     },
 
-    getClassName(codename, type, side) {
+    // Generate class name for controller: ControllerExtension{Type}{Name}
+    getControllerClassName(codename, type) {
         let parts = codename.split('_').map(p => p.charAt(0).toUpperCase() + p.slice(1));
         let typePart = type.charAt(0).toUpperCase() + type.slice(1);
-        let sidePart = side.charAt(0).toUpperCase() + side.slice(1);
-        return `${sidePart}Extension${typePart}${parts.join('')}`;
+        return `ControllerExtension${typePart}${parts.join('')}`;
+    },
+
+    // Generate class name for model: ModelExtension{Type}{Name}
+    getModelClassName(codename, type) {
+        let parts = codename.split('_').map(p => p.charAt(0).toUpperCase() + p.slice(1));
+        let typePart = type.charAt(0).toUpperCase() + type.slice(1);
+        return `ModelExtension${typePart}${parts.join('')}`;
     },
 
     // Templates
     getEventControllerTemplate() {
         const codename = this.config.codename;
         const type = this.config.type;
-        const className = this.getClassName(codename, type, 'catalog', '_event');
+        // For event controllers: ControllerExtension{Type}{Name}Event
+        let parts = codename.split('_').map(p => p.charAt(0).toUpperCase() + p.slice(1));
+        let typePart = type.charAt(0).toUpperCase() + type.slice(1);
+        const className = `ControllerExtension${typePart}${parts.join('')}Event`;
 
         return `<?php
 class ${className} extends Controller {
@@ -528,7 +604,10 @@ class ${className} extends Controller {
     getAjaxControllerTemplate() {
         const codename = this.config.codename;
         const type = this.config.type;
-        const className = this.getClassName(codename, type, 'catalog', '_api');
+        // For API controllers: ControllerExtension{Type}{Name}Api
+        let parts = codename.split('_').map(p => p.charAt(0).toUpperCase() + p.slice(1));
+        let typePart = type.charAt(0).toUpperCase() + type.slice(1);
+        const className = `ControllerExtension${typePart}${parts.join('')}Api`;
 
         return `<?php
 class ${className} extends Controller {
@@ -721,10 +800,13 @@ $_['error_permission'] = '${error}';
 
         // Payment and Shipping need text_title and text_description
         if (type === 'payment' || type === 'shipping') {
-            const titleLabel = isRu ? name : name;
-            const descLabel = isRu
-                ? (type === 'payment' ? 'Описание метода оплаты' : 'Описание метода доставки')
-                : (type === 'payment' ? 'Payment method description' : 'Shipping method description');
+            const titleLabel = name;
+            // Use user-provided description or default placeholder
+            const userDesc = this.config.description;
+            const defaultDesc = isRu
+                ? (type === 'payment' ? 'Безопасная оплата заказа' : 'Надёжная доставка заказа')
+                : (type === 'payment' ? 'Secure payment method' : 'Reliable shipping method');
+            const descLabel = userDesc || defaultDesc;
 
             return `<?php
 // Text
@@ -1093,3 +1175,5 @@ window.removeField = (id) => Generator.removeField(id);
 window.updateField = (id, key, value) => Generator.updateField(id, key, value);
 window.selectPreviewFile = (file, btn) => Generator.selectPreviewFile(file, btn);
 window.loadDemoFields = () => Generator.loadDemoFields();
+window.onModuleNameInput = () => Generator.onModuleNameInput();
+window.onCodenameInput = () => Generator.onCodenameInput();
