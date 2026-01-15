@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор модулей OpenCart 3 | Opencart Клуб</title>
+    <meta name="description"
+        content="Бесплатный онлайн генератор каркаса модулей для OpenCart 3, OcStore 3 и LiveStore 3. Создайте структуру модуля за одну минуту.">
+    <meta name="keywords"
+        content="OpenCart, генератор модулей, разработка, OpenCart 3, OcStore, модуль, каркас модуля, расширение">
+    <meta property="og:title" content="Генератор модулей OpenCart 3 | Opencart Клуб">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://opencartforum.com.ru/module_generator.html">
+    <meta property="og:description"
+        content="Бесплатный онлайн генератор каркаса модулей для OpenCart 3, OcStore 3 и LiveStore 3.">
+    <meta property="og:site_name" content="Opencart Клуб">
+    <meta property="og:locale" content="ru_RU">
+    <link rel="canonical" href="https://opencartforum.com.ru/module_generator.html" />
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* ========================================
+           BASE STYLES (from style.css)
+           ======================================== */
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #64748b;
+            --text-color: #1e293b;
+            --light-bg: #f8fafc;
+            --white: #ffffff;
+            --border-color: #e2e8f0;
+            --hover-color: #1d4ed8;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--white);
+        }
+
+        .section-padding {
+            padding: 5rem 0;
+        }
+
+        .navbar-custom {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .text-primary-custom {
+            color: var(--primary-color) !important;
+        }
+
+        .btn-primary-custom {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+            padding: 0.5rem 0.9rem;
+            font-weight: 500;
+            border-radius: 50px;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary-custom:hover {
+            background-color: var(--hover-color);
+            border-color: var(--hover-color);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+        }
+
+        .footer-custom {
+            background-color: var(--text-color);
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .section-padding {
+                padding: 3rem 0;
+            }
+        }
+
+        /* ========================================
+           GENERATOR-SPECIFIC STYLES
+           ======================================== */
+        .generator-container {
+            background: white;
+            border-radius: 1.5rem;
+            border: 1px solid var(--border-color);
+            padding: 2.5rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03);
+            margin-bottom: 2rem;
+        }
+
+        .mode-switch-wrapper {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .mode-switch {
+            display: flex;
+            background: var(--light-bg);
+            border-radius: 12px;
+            padding: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        .mode-btn {
+            padding: 10px 24px;
+            border: none;
+            background: transparent;
+            color: var(--secondary-color);
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .mode-btn.active {
+            background: white;
+            color: var(--primary-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .mode-btn.active.dev-mode {
+            color: #8b5cf6;
+        }
+
+        .form-label-custom {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.6rem;
+            color: var(--text-color);
+        }
+
+        .form-control-custom {
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+
+        .form-control-custom:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-select-custom {
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            font-size: 0.95rem;
+        }
+
+        .card-settings {
+            background: var(--light-bg);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            height: 100%;
+            border: 1px solid var(--border-color);
+        }
+
+        .file-options-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .option-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .option-group-label {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--secondary-color);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.75rem;
+            display: block;
+        }
+
+        .custom-checkbox-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.6rem;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .custom-checkbox-item input {
+            display: none;
+        }
+
+        .checkbox-box {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border-color);
+            border-radius: 5px;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            background: white;
+            flex-shrink: 0;
+        }
+
+        .custom-checkbox-item input:checked+.checkbox-box {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .custom-checkbox-item input:checked+.checkbox-box::after {
+            content: "\f00c";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            color: white;
+            font-size: 10px;
+        }
+
+        .checkbox-label {
+            font-size: 0.95rem;
+        }
+
+        .tree-container {
+            background: #1e293b;
+            color: #e2e8f0;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.85rem;
+            min-height: 300px;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.2);
+            overflow: auto;
+        }
+
+        .tree-item {
+            margin-left: 1.5rem;
+            position: relative;
+            padding: 2px 0;
+        }
+
+        .tree-item::before {
+            content: "";
+            position: absolute;
+            left: -1rem;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: #475569;
+        }
+
+        .tree-item:last-child::before {
+            height: 0.75rem;
+        }
+
+        .tree-item::after {
+            content: "";
+            position: absolute;
+            left: -1rem;
+            top: 0.75rem;
+            width: 0.75rem;
+            height: 1px;
+            background: #475569;
+        }
+
+        .tree-folder {
+            color: #94a3b8;
+            font-weight: 600;
+        }
+
+        .tree-file {
+            color: #38bdf8;
+        }
+
+        .tree-zip {
+            color: #fbbf24;
+            font-weight: bold;
+        }
+
+        .btn-generate {
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            font-weight: 700;
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3);
+            transition: all 0.3s;
+        }
+
+        .btn-generate:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(37, 99, 235, 0.4);
+        }
+
+        /* Dark Theme overrides */
+        body.dark-theme .generator-container {
+            background: #1e293b;
+            border-color: #334155;
+        }
+
+        body.dark-theme .card-settings {
+            background: #0f172a;
+            border-color: #334155;
+        }
+
+        body.dark-theme .form-label-custom {
+            color: #e2e8f0;
+        }
+
+        body.dark-theme .form-control-custom,
+        body.dark-theme .form-select-custom {
+            background: #1e293b;
+            border-color: #334155;
+            color: #e2e8f0;
+        }
+
+        body.dark-theme .mode-switch {
+            background: #0f172a;
+            border-color: #334155;
+        }
+
+        body.dark-theme .mode-btn.active {
+            background: #1e293b;
+            color: var(--primary-color);
+        }
+
+        body.dark-theme .checkbox-box {
+            background: #0f172a;
+            border-color: #334155;
+        }
+
+        .field-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            position: relative;
+            transition: all 0.2s;
+        }
+
+        .field-card:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .field-card-remove {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: #ef4444;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .field-card-remove:hover {
+            background: #fee2e2;
+        }
+
+        .border-dashed {
+            border-style: dashed !important;
+            border-width: 2px !important;
+        }
+
+        /* Animations & Dev Mode Visuals */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-in {
+            animation: fadeInDown 0.4s ease-out forwards;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+
+        body.dev-mode-active {
+            --primary-color: #f59e0b;
+            /* Golden accent for Dev Mode */
+            --primary-hover: #d97706;
+        }
+
+        body.dev-mode-active .navbar-custom {
+            border-bottom: 2px solid #f59e0b;
+        }
+
+        .dev-badge-container {
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .instruction-card {
+            border-left: 4px solid #f59e0b;
+            background: rgba(245, 158, 11, 0.05);
+        }
+
+        body.dark-theme .instruction-card {
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        body.dark-theme .field-card {
+            background: #0f172a;
+            border-color: #334155;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Minimal Standalone Header -->
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top navbar-custom">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-primary-custom" href="#">
+                <i class="fas fa-cogs me-2"></i>Генератор модулей OpenCart 3
+            </a>
+        </div>
+    </nav>
+
+    <section class="section-padding" style="padding-top: 7rem;">
+        <div class="container">
+            <div class="row justify-content-center mb-5">
+                <div class="col-lg-10 text-center">
+                    <h1 class="display-5 fw-bold mb-3">
+                        <i class="fas fa-cogs text-primary-custom me-2"></i>Генератор модулей <span id="modeBadge"
+                            class="badge bg-secondary ms-2"
+                            style="font-size: 0.4em; vertical-align: middle;">SIMPLE</span>
+                    </h1>
+                    <p class="lead text-secondary">
+                        Профессиональный инструмент для быстрого создания каркаса модуля по стандартам OpenCart
+                    </p>
+                </div>
+            </div>
+
+            <div class="generator-container">
+                <div class="mode-switch-wrapper">
+                    <div class="mode-switch">
+                        <button class="mode-btn active" id="simpleModeBtn" onclick="switchMode('simple')">
+                            <i class="fas fa-bolt me-1"></i> Простой режим
+                        </button>
+                        <button class="mode-btn" id="devModeBtn" onclick="switchMode('dev')">
+                            <i class="fas fa-code me-1"></i> Режим разработчика
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Dev Mode Guide -->
+                <div class="dev-only" style="display: none; margin-bottom: 2rem;">
+                    <div class="card card-settings instruction-card">
+                        <div class="card-body p-4">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h4 class="fw-bold mb-2">🚀 Добро пожаловать в режим разработчика</h4>
+                                    <p class="mb-0 text-secondary">
+                                        В этом режиме вы можете использовать <strong>Конструктор полей</strong>,
+                                        настраивать <strong>пути к шаблонам (Theme)</strong> и задавать
+                                        <strong>кастомные имена ассетов</strong>.
+                                    </p>
+                                </div>
+                                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                                    <button class="btn btn-outline-primary btn-demo" onclick="loadDemoFields()">
+                                        <i class="fas fa-magic me-2"></i>Собери сам
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <!-- Left Column: Settings -->
+                    <div class="col-lg-6">
+                        <div class="card-settings">
+                            <h5 class="file-options-title mb-4">
+                                <i class="fas fa-sliders-h text-primary-custom"></i>Основные настройки
+                            </h5>
+
+                            <div class="mb-3">
+                                <label class="form-label-custom">Тип расширения:</label>
+                                <select class="form-select form-select-custom" id="moduleType" onchange="updateUI()">
+                                    <option value="module">Модуль (Module)</option>
+                                    <option value="payment">Оплата (Payment)</option>
+                                    <option value="shipping">Доставка (Shipping)</option>
+                                    <option value="total">Учитывать в заказе (Total)</option>
+                                    <option value="feed">Каналы продвижения (Feed)</option>
+                                    <option value="report">Отчеты (Report)</option>
+                                    <option value="dashboard">Панель управления (Dashboard)</option>
+                                    <option value="analytics">Аналитика (Analytics)</option>
+                                    <option value="captcha">Капча (Captcha) </option>
+                                    <option value="fraud">Защита от мошенничества (Fraud)</option>
+                                    <option value="theme">Шаблон (Theme)</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3" id="multiModuleGroup">
+                                <label class="custom-checkbox-item">
+                                    <input type="checkbox" id="isMultiModule" onchange="updateUI()">
+                                    <div class="checkbox-box"></div>
+                                    <span class="checkbox-label">Поддержка нескольких экземпляров (Multi-module)</span>
+                                </label>
+                                <small class="text-muted d-block mt-1 ms-4">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Позволяет устанавливать модуль несколько раз с разными настройками (например, разные
+                                    баннеры на разных страницах).
+                                </small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label-custom">Название модуля (отображаемое):</label>
+                                <input type="text" class="form-control form-control-custom" id="moduleName"
+                                    placeholder="Например: Супер Баннер" oninput="updateUI()">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label-custom">Кодовое имя (codename):</label>
+                                <input type="text" class="form-control form-control-custom" id="moduleCode"
+                                    placeholder="Например: super_banner" oninput="updateUI()">
+                                <small class="text-muted">Только латиница, цифры и подчеркивание</small>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label-custom">Версия:</label>
+                                    <input type="text" class="form-control form-control-custom" id="moduleVersion"
+                                        value="1.0.0" oninput="updateUI()">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label-custom">Автор:</label>
+                                    <input type="text" class="form-control form-control-custom" id="moduleAuthor"
+                                        value="Opencart Club" oninput="updateUI()">
+                                </div>
+                            </div>
+
+                            <!-- Developer Specific Settings -->
+                            <div class="dev-only border-top pt-3 mt-2" style="display: none;">
+                                <h6 class="fw-bold mb-3">
+                                    <i class="fas fa-tools me-2"></i>Настройки разработчика
+                                    <i class="fas fa-question-circle ms-1 text-muted" style="font-size: 0.8rem;"
+                                        title="Настройки путей и имен файлов для продвинутых разработчиков"></i>
+                                </h6>
+                                <div class="mb-3">
+                                    <label class="form-label-custom">
+                                        Название темы (Theme):
+                                        <i class="fas fa-info-circle ms-1 text-primary-custom" style="cursor:help;"
+                                            title="Если вы используете сторонний шаблон (Unishop, Journal и т.д.), укажите его имя, чтобы файлы попали в нужную папку theme/{name}/"></i>
+                                    </label>
+                                    <input type="text" class="form-control form-control-custom" id="themeName"
+                                        value="default" placeholder="Например: default или unishop2"
+                                        oninput="updateUI()">
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label-custom">
+                                            Кастомный JS:
+                                            <i class="fas fa-info-circle ms-1 text-primary-custom" style="cursor:help;"
+                                                title="Имя файла в catalog/view/javascript/{codename}/. Если пусто - используется codename."></i>
+                                        </label>
+                                        <input type="text" class="form-control form-control-custom" id="customJsName"
+                                            placeholder="Имя файла без .js" oninput="updateUI()">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label-custom">
+                                            Кастомный CSS:
+                                            <i class="fas fa-info-circle ms-1 text-primary-custom" style="cursor:help;"
+                                                title="Имя файла в catalog/view/javascript/{codename}/. Если пусто - используется codename."></i>
+                                        </label>
+                                        <input type="text" class="form-control form-control-custom" id="customCssName"
+                                            placeholder="Имя файла без .css" oninput="updateUI()">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Files & Tree -->
+                    <div class="col-lg-6">
+                        <div class="card-settings">
+                            <h5 class="file-options-title mb-4">
+                                <i class="fas fa-folder-open text-primary-custom"></i>Структура и файлы
+                            </h5>
+
+                            <div class="option-group">
+                                <span class="option-group-label">Общие</span>
+                                <label class="custom-checkbox-item">
+                                    <input type="checkbox" id="createOcmod" checked onchange="updateUI()">
+                                    <div class="checkbox-box"></div>
+                                    <span class="checkbox-label">Модификатор (install.xml)</span>
+                                </label>
+                            </div>
+
+                            <div class="option-group">
+                                <span class="option-group-label">Админка (Admin)</span>
+                                <label class="custom-checkbox-item">
+                                    <input type="checkbox" id="createAdminModel" checked onchange="updateUI()">
+                                    <div class="checkbox-box"></div>
+                                    <span class="checkbox-label">Модель (Model)</span>
+                                </label>
+                                <small class="text-muted d-block mb-2">Контроллер, Язык и Шаблон создаются
+                                    всегда.</small>
+                            </div>
+
+                            <div class="option-group">
+                                <span class="option-group-label">Витрина (Catalog)</span>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <label class="custom-checkbox-item">
+                                            <input type="checkbox" id="createCatalogController" onchange="updateUI()">
+                                            <div class="checkbox-box"></div>
+                                            <span class="checkbox-label">Контроллер</span>
+                                        </label>
+                                        <label class="custom-checkbox-item">
+                                            <input type="checkbox" id="createCatalogModel" onchange="updateUI()">
+                                            <div class="checkbox-box"></div>
+                                            <span class="checkbox-label">Модель</span>
+                                        </label>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="custom-checkbox-item">
+                                            <input type="checkbox" id="createCatalogView" onchange="updateUI()">
+                                            <div class="checkbox-box"></div>
+                                            <span class="checkbox-label">Шаблон (Twig)</span>
+                                        </label>
+                                        <label class="custom-checkbox-item">
+                                            <input type="checkbox" id="createCatalogLanguage" onchange="updateUI()">
+                                            <div class="checkbox-box"></div>
+                                            <span class="checkbox-label">Язык</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="option-group mb-0">
+                                <span class="option-group-label">Ресурсы</span>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <label class="custom-checkbox-item">
+                                            <input type="checkbox" id="createJs" onchange="updateUI()">
+                                            <div class="checkbox-box"></div>
+                                            <span class="checkbox-label">JavaScript файл</span>
+                                        </label>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="custom-checkbox-item">
+                                            <input type="checkbox" id="createCss" onchange="updateUI()">
+                                            <div class="checkbox-box"></div>
+                                            <span class="checkbox-label">CSS файл</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="tree-container" id="fileTree">
+                            <!-- File tree will be generated here -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-5 simple-only">
+                    <button class="btn btn-primary btn-generate" onclick="generateModule()">
+                        <i class="fas fa-rocket me-2"></i>Создать и скачать модуль (.zip)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dev Mode Sections -->
+            <div id="devModeSections" class="dev-only" style="display: none;">
+                <div class="generator-container">
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <h5 class="file-options-title mb-4">
+                                <i class="fas fa-layer-group text-primary-custom"></i>Конструктор полей (Fields
+                                Constructor)
+                            </h5>
+
+                            <div id="noFieldsAlert" class="alert alert-light text-center border-dashed py-5">
+                                <p class="text-secondary mb-0">Поля еще не добавлены. Используйте панель справа,
+                                    чтобы добавить поля.</p>
+                            </div>
+                            <div id="fieldsContainer" class="mb-4">
+                                <!-- Fields will be added here -->
+                            </div>
+                        </div>
+
+                        <div class="col-lg-4">
+                            <div class="card-settings">
+                                <h5 class="file-options-title mb-3">Добавить поле</h5>
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-outline-primary text-start p-2" onclick="addField('text')">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-font me-3 fs-5"></i>
+                                            <div>
+                                                <div class="fw-bold">Текстовое поле (Text)</div>
+                                                <small class="text-muted d-block">Для коротких строк, заголовков</small>
+                                            </div>
+                                        </div>
+                                    </button>
+                                    <button class="btn btn-outline-primary text-start p-2"
+                                        onclick="addField('textarea')">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-paragraph me-3 fs-5"></i>
+                                            <div>
+                                                <div class="fw-bold">Текст (Textarea)</div>
+                                                <small class="text-muted d-block">Для больших текстов, HTML-кода</small>
+                                            </div>
+                                        </div>
+                                    </button>
+                                    <button class="btn btn-outline-primary text-start p-2" onclick="addField('select')">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-list me-3 fs-5"></i>
+                                            <div>
+                                                <div class="fw-bold">Список (Select)</div>
+                                                <small class="text-muted d-block">Выбор значения из выпадающего
+                                                    списка</small>
+                                            </div>
+                                        </div>
+                                    </button>
+                                    <button class="btn btn-outline-primary text-start p-2" onclick="addField('toggle')">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-toggle-on me-3 fs-5"></i>
+                                            <div>
+                                                <div class="fw-bold">Переключатель (Toggle)</div>
+                                                <small class="text-muted d-block">Да/Нет, Включить/Выключить</small>
+                                            </div>
+                                        </div>
+                                    </button>
+                                    <button class="btn btn-outline-primary text-start p-2" onclick="addField('image')">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-image me-3 fs-5"></i>
+                                            <div>
+                                                <div class="fw-bold">Выбор изображения</div>
+                                                <small class="text-muted d-block">Стандартный файловый менеджер
+                                                    OC</small>
+                                            </div>
+                                        </div>
+                                    </button>
+                                </div>
+
+                                <hr class="my-4">
+
+                                <h5 class="file-options-title mb-3">Дополнительно</h5>
+                                <label class="custom-checkbox-item">
+                                    <input type="checkbox" id="generateEvents" onchange="updateUI()">
+                                    <div class="checkbox-box"></div>
+                                    <span class="checkbox-label">Генерировать Events</span>
+                                </label>
+                                <label class="custom-checkbox-item">
+                                    <input type="checkbox" id="generateAjax" onchange="updateUI()">
+                                    <div class="checkbox-box"></div>
+                                    <span class="checkbox-label">Генерировать AJAX API</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="generator-container">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="file-options-title mb-0">
+                            <i class="fas fa-eye text-primary-custom"></i>Предпросмотр кода
+                        </h5>
+                        <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#codePreviewCollapse" aria-expanded="false"
+                            aria-controls="codePreviewCollapse">
+                            <i class="fas fa-chevron-down me-1"></i>Показать / Скрыть
+                        </button>
+                    </div>
+                    <div class="collapse" id="codePreviewCollapse">
+                        <div class="d-flex justify-content-end mb-3">
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-sm btn-outline-secondary active"
+                                    onclick="selectPreviewFile('controller', this)">Admin Controller</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary"
+                                    onclick="selectPreviewFile('view', this)">Admin View</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary"
+                                    onclick="selectPreviewFile('ocmod', this)">install.xml</button>
+                            </div>
+                        </div>
+                        <div class="tree-container">
+                            <pre id="codePreview" class="mb-0"
+                                style="font-size: 0.8rem; line-height: 1.5;">// Здесь будет предпросмотр кода...</pre>
+                        </div>
+                    </div>
+
+                    <!-- Dev Mode: Generate Button at bottom -->
+                    <div class="text-center mt-4 dev-only" style="display: none;">
+                        <button class="btn btn-primary btn-generate btn-lg" onclick="generateModule()">
+                            <i class="fas fa-rocket me-2"></i>Создать и скачать модуль (.zip)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Minimal Standalone Footer -->
+    <footer class="footer-custom py-4">
+        <div class="container text-center">
+            <p class="text-light opacity-75 mb-0">
+                Генератор модулей OpenCart 3 | <a href="https://opencartforum.com.ru/" class="text-light">Opencart
+                    Клуб</a>
+            </p>
+        </div>
+    </footer>
+
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <!-- JSZip for client-side zip creation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <script src="module_generator.js"></script>
+</body>
+
+</html>

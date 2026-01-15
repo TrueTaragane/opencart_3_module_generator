@@ -1,0 +1,1095 @@
+/**
+ * OpenCart 3 Module Generator
+ * Logic for generating OpenCart 3 module skeletons
+ */
+
+const Generator = {
+    mode: 'simple',
+    config: {
+        type: 'module',
+        isMultiModule: false,
+        name: 'My Module',
+        codename: 'my_module',
+        version: '1.0.0',
+        author: 'Opencart Club',
+        files: {
+            ocmod: true,
+            admin_model: true,
+            catalog_controller: false,
+            catalog_model: false,
+            catalog_view: false,
+            catalog_language: false,
+            js: false,
+            css: false
+        }
+    },
+    fields: [],
+
+    init() {
+        this.updateUI();
+        this.updateFieldsUI();
+        this.toggleDevVisuals(); // Initialize dev visuals based on current mode
+    },
+
+    switchMode(mode) {
+        this.mode = mode;
+        const simpleBtn = document.getElementById('simpleModeBtn');
+        const devBtn = document.getElementById('devModeBtn');
+        const devSections = document.querySelectorAll('.dev-only');
+        const badge = document.getElementById('modeBadge');
+        badge.innerText = mode === 'simple' ? 'ПРОСТОЙ' : 'DEV';
+        badge.className = `badge ${mode === 'simple' ? 'bg-secondary' : 'bg-warning text-dark'} ms-2`;
+
+        if (mode === 'dev') {
+            simpleBtn.classList.remove('active');
+            devBtn.classList.add('active');
+            devSections.forEach(s => {
+                s.style.display = 'block';
+                s.classList.add('animate-in');
+            });
+            // Hide simple-only elements
+            document.querySelectorAll('.simple-only').forEach(el => el.style.display = 'none');
+        } else {
+            simpleBtn.classList.add('active');
+            devBtn.classList.remove('active');
+            devSections.forEach(s => {
+                s.style.display = 'none';
+                s.classList.remove('animate-in');
+            });
+            // Show simple-only elements
+            document.querySelectorAll('.simple-only').forEach(el => el.style.display = 'block');
+        }
+
+        this.toggleDevVisuals();
+        this.renderCodePreview();
+        this.renderFileTree();
+    },
+
+    loadDemoFields() {
+        this.fields = [
+            { id: 1, type: 'text', name: 'Заголовок баннера', key: 'banner_title' },
+            { id: 2, type: 'toggle', name: 'Показывать в мобилке', key: 'show_mobile' },
+            { id: 3, type: 'image', name: 'Изображение', key: 'banner_image' }
+        ];
+        this.updateFieldsUI();
+        this.updateUI();
+
+        // Show success micro-interaction
+        const btn = document.querySelector('.btn-demo');
+        if (btn) {
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check me-2"></i>Демо загружено';
+            btn.classList.replace('btn-outline-primary', 'btn-success');
+
+            // Scroll to constructor
+            const fieldsContainer = document.getElementById('fieldsContainer');
+            if (fieldsContainer) {
+                fieldsContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.classList.replace('btn-success', 'btn-outline-primary');
+            }, 2000);
+        }
+    },
+
+    toggleDevVisuals() {
+        const body = document.body;
+        const badge = document.getElementById('modeBadge');
+
+        if (this.mode === 'dev') {
+            body.classList.add('dev-mode-active');
+            if (badge) {
+                // badge.textContent = 'DEV MODE'; // Handled in switchMode
+                // badge.className = 'badge bg-warning text-dark ms-2 pulse-animation'; // Handled in switchMode
+                badge.style.display = 'inline-block';
+            }
+        } else {
+            body.classList.remove('dev-mode-active');
+            if (badge) {
+                // badge.textContent = 'SIMPLE'; // Handled in switchMode
+                // badge.className = 'badge bg-secondary ms-2'; // Handled in switchMode
+                badge.style.display = 'inline-block';
+            }
+        }
+    },
+
+    addField(type) {
+        const id = Date.now();
+        const field = {
+            id: id,
+            type: type,
+            name: `Field ${this.fields.length + 1}`,
+            key: `field_${this.fields.length + 1}`
+        };
+        this.fields.push(field);
+        this.updateFieldsUI();
+        this.updateUI();
+    },
+
+    removeField(id) {
+        this.fields = this.fields.filter(f => f.id !== id);
+        this.updateFieldsUI();
+        this.updateUI();
+    },
+
+    updateFieldsUI() {
+        const container = document.getElementById('fieldsContainer');
+        const alert = document.getElementById('noFieldsAlert');
+
+        if (!container || !alert) return;
+
+        if (this.fields.length === 0) {
+            alert.style.display = 'block';
+            container.innerHTML = '';
+            return;
+        }
+
+        alert.style.display = 'none';
+        container.innerHTML = '';
+
+        this.fields.forEach(field => {
+            const div = document.createElement('div');
+            div.className = 'field-card animate-in';
+
+            let description = '';
+            switch (field.type) {
+                case 'text': description = 'Короткое текстовое поле для заголовков или имен.'; break;
+                case 'textarea': description = 'Многострочное поле для описаний или HTML кода.'; break;
+                case 'select': description = 'Выпадающий список с заранее заданными значениями.'; break;
+                case 'toggle': description = 'Переключатель Да/Нет (булево значение).'; break;
+                case 'image': description = 'Интеграция со стандартным менеджером изображений OpenCart.'; break;
+            }
+
+            div.innerHTML = `
+                <div class="field-card-remove" onclick="removeField(${field.id})">
+                    <i class="fas fa-times"></i>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-5">
+                        <label class="form-label-custom">Название (Label)</label>
+                        <input type="text" class="form-control form-control-custom" value="${field.name}" 
+                            oninput="updateField(${field.id}, 'name', this.value)">
+                        <small class="text-muted">${description}</small>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label-custom">Ключ (Key)</label>
+                        <input type="text" class="form-control form-control-custom" value="${field.key}" 
+                            oninput="updateField(${field.id}, 'key', this.value)">
+                        <small class="text-muted">Используется в коде как <code>$${field.key}</code></small>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label-custom">Тип</label>
+                        <div class="pt-2"><strong>${field.type.toUpperCase()}</strong></div>
+                    </div>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    },
+
+    updateField(id, key, value) {
+        const field = this.fields.find(f => f.id === id);
+        if (field) {
+            field[key] = value;
+            this.updateUI();
+        }
+    },
+
+    getFormValues() {
+        this.config.type = document.getElementById('moduleType').value;
+        this.config.isMultiModule = document.getElementById('isMultiModule').checked;
+        this.config.name = document.getElementById('moduleName').value || 'My Module';
+        this.config.codename = (document.getElementById('moduleCode').value || 'my_module')
+            .toLowerCase()
+            .replace(/[^a-z0-9_]/g, '_');
+        this.config.version = document.getElementById('moduleVersion').value || '1.0.0';
+        this.config.author = document.getElementById('moduleAuthor').value || 'Opencart Club';
+
+        this.config.files.ocmod = document.getElementById('createOcmod').checked;
+        this.config.files.admin_model = document.getElementById('createAdminModel').checked;
+        this.config.files.catalog_controller = document.getElementById('createCatalogController').checked;
+        this.config.files.catalog_model = document.getElementById('createCatalogModel').checked;
+        this.config.files.catalog_view = document.getElementById('createCatalogView').checked;
+        this.config.files.catalog_language = document.getElementById('createCatalogLanguage').checked;
+        this.config.files.js = document.getElementById('createJs').checked;
+        this.config.files.css = document.getElementById('createCss').checked;
+
+        // Dev options
+        this.config.generateEvents = document.getElementById('generateEvents') ? document.getElementById('generateEvents').checked : false;
+        this.config.generateAjax = document.getElementById('generateAjax') ? document.getElementById('generateAjax').checked : false;
+
+        this.config.theme = (document.getElementById('themeName') ? document.getElementById('themeName').value : 'default') || 'default';
+        this.config.jsName = (document.getElementById('customJsName') ? document.getElementById('customJsName').value : '') || this.config.codename;
+        this.config.cssName = (document.getElementById('customCssName') ? document.getElementById('customCssName').value : '') || this.config.codename;
+    },
+
+    updateUI() {
+        this.getFormValues();
+
+        // Toggle Multi-module visibility
+        const multiModuleGroup = document.getElementById('multiModuleGroup');
+        if (this.config.type === 'module') {
+            multiModuleGroup.style.display = 'block';
+        } else {
+            multiModuleGroup.style.display = 'none';
+            this.config.isMultiModule = false;
+        }
+
+        this.renderFileTree();
+        this.renderCodePreview();
+    },
+
+    previewFile: 'controller',
+
+    renderCodePreview() {
+        if (this.mode !== 'dev') return;
+
+        const previewElement = document.getElementById('codePreview');
+        const codename = this.config.codename;
+        const type = this.config.type;
+        const className = this.getClassName(codename, type, 'admin');
+
+        let code = '';
+        if (this.previewFile === 'controller') {
+            code = this.getAdminControllerTemplate(className);
+        } else if (this.previewFile === 'view') {
+            code = this.getAdminViewTemplate();
+        } else if (this.previewFile === 'ocmod') {
+            code = this.getOcmodTemplate();
+        }
+
+        previewElement.textContent = code;
+    },
+
+    selectPreviewFile(file, btn) {
+        this.previewFile = file;
+
+        // Update active class on buttons
+        const buttons = btn.parentElement.querySelectorAll('button');
+        buttons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        this.renderCodePreview();
+    },
+
+    renderFileTree() {
+        const treeContainer = document.getElementById('fileTree');
+        const codename = this.config.codename;
+        const type = this.config.type;
+        const themeName = this.config.theme;
+        const hasCustomTheme = themeName && themeName !== 'default';
+
+        let html = `<div class="tree-zip"><i class="fas fa-file-archive me-2"></i>${codename}.ocmod.zip</div>`;
+        html += `<div class="tree-item"><span class="tree-folder">upload/</span>`;
+
+        // Admin section (for all extension types including theme)
+        html += `<div class="tree-item"><span class="tree-folder">admin/</span>`;
+
+        // Controller
+        html += `<div class="tree-item"><span class="tree-folder">controller/extension/${type}/</span>`;
+        html += `<div class="tree-item"><span class="tree-file">${codename}.php</span></div></div>`;
+
+        // Language
+        html += `<div class="tree-item"><span class="tree-folder">language/</span>`;
+        html += `<div class="tree-item"><span class="tree-folder">en-gb/extension/${type}/</span>`;
+        html += `<div class="tree-item"><span class="tree-file">${codename}.php</span></div></div>`;
+        html += `<div class="tree-item"><span class="tree-folder">ru-ru/extension/${type}/</span>`;
+        html += `<div class="tree-item"><span class="tree-file">${codename}.php</span></div></div></div>`;
+
+        // Model
+        if (this.config.files.admin_model) {
+            html += `<div class="tree-item"><span class="tree-folder">model/extension/${type}/</span>`;
+            html += `<div class="tree-item"><span class="tree-file">${codename}.php</span></div></div>`;
+        }
+
+        // View
+        html += `<div class="tree-item"><span class="tree-folder">view/template/extension/${type}/</span>`;
+        html += `<div class="tree-item"><span class="tree-file">${codename}.twig</span></div></div>`;
+
+        html += `</div>`; // End admin
+
+        // Catalog
+        if (this.config.files.catalog_controller || this.config.files.catalog_model || this.config.files.catalog_view || this.config.files.catalog_language || this.config.generateEvents || this.config.generateAjax || this.config.files.js || this.config.files.css) {
+            html += `<div class="tree-item"><span class="tree-folder">catalog/</span>`;
+
+            // Controller
+            if (this.config.files.catalog_controller || this.config.generateAjax || this.config.generateEvents) {
+                html += `<div class="tree-item"><span class="tree-folder">controller/extension/${type}/</span>`;
+                if (this.config.files.catalog_controller) {
+                    html += `<div class="tree-item"><span class="tree-file">${codename}.php</span></div>`;
+                }
+                if (this.config.generateAjax) {
+                    html += `<div class="tree-item"><span class="tree-file">${codename}_api.php</span></div>`;
+                }
+                if (this.config.generateEvents) {
+                    html += `<div class="tree-item"><span class="tree-file">${codename}_event.php</span></div>`;
+                }
+                html += `</div>`;
+            }
+
+            // Language
+            if (this.config.files.catalog_language) {
+                html += `<div class="tree-item"><span class="tree-folder">language/</span>`;
+                html += `<div class="tree-item"><span class="tree-folder">en-gb/extension/${type}/</span>`;
+                html += `<div class="tree-item"><span class="tree-file">${codename}.php</span></div></div>`;
+                html += `<div class="tree-item"><span class="tree-folder">ru-ru/extension/${type}/</span>`;
+                html += `<div class="tree-item"><span class="tree-file">${codename}.php</span></div></div></div>`;
+            }
+
+            // Model
+            if (this.config.files.catalog_model) {
+                html += `<div class="tree-item"><span class="tree-folder">model/extension/${type}/</span>`;
+                html += `<div class="tree-item"><span class="tree-file">${codename}.php</span></div></div>`;
+            }
+
+            // View & Assets
+            if (this.config.files.catalog_view || this.config.files.js || this.config.files.css) {
+                html += `<div class="tree-item"><span class="tree-folder">view/</span>`;
+
+                if (this.config.files.catalog_view) {
+                    // Always show default theme
+                    html += `<div class="tree-item"><span class="tree-folder">theme/default/template/extension/${type}/</span>`;
+                    html += `<div class="tree-item"><span class="tree-file">${codename}.twig</span></div></div>`;
+
+                    // If custom theme specified, also show custom theme folder
+                    if (hasCustomTheme) {
+                        html += `<div class="tree-item"><span class="tree-folder">theme/${themeName}/template/extension/${type}/</span>`;
+                        html += `<div class="tree-item"><span class="tree-file">${codename}.twig</span></div></div>`;
+                    }
+                }
+
+                // For theme type: CSS in theme/default/stylesheet/, JS in javascript/
+                if (type === 'theme') {
+                    if (this.config.files.css) {
+                        html += `<div class="tree-item"><span class="tree-folder">theme/default/stylesheet/</span>`;
+                        html += `<div class="tree-item"><span class="tree-file">${codename}.css</span></div></div>`;
+                    }
+                    if (this.config.files.js) {
+                        html += `<div class="tree-item"><span class="tree-folder">javascript/</span>`;
+                        html += `<div class="tree-item"><span class="tree-file">${codename}.js</span></div></div>`;
+                    }
+                } else {
+                    // For other types: JS and CSS in javascript/{codename}/
+                    if (this.config.files.js || this.config.files.css) {
+                        html += `<div class="tree-item"><span class="tree-folder">javascript/${codename}/</span>`;
+                        if (this.config.files.js) html += `<div class="tree-item"><span class="tree-file">${this.config.jsName}.js</span></div>`;
+                        if (this.config.files.css) html += `<div class="tree-item"><span class="tree-file">${this.config.cssName}.css</span></div>`;
+                        html += `</div>`;
+                    }
+                }
+
+                html += `</div>`; // End view
+            }
+
+            html += `</div>`; // End catalog
+        }
+
+        html += `</div>`; // End upload
+
+        // OCMOD
+        if (this.config.files.ocmod) {
+            html += `<div class="tree-item"><span class="tree-file">install.xml</span></div>`;
+        }
+
+        treeContainer.innerHTML = html;
+    },
+
+    async generateModule() {
+        this.getFormValues();
+        const zip = new JSZip();
+        const codename = this.config.codename;
+        const type = this.config.type;
+        const themeName = this.config.theme;
+        const hasCustomTheme = themeName && themeName !== 'default';
+
+        const upload = zip.folder("upload");
+
+        // All extension types (including theme) have admin section
+        const admin = upload.folder("admin");
+
+        // Helper to format class name
+        const className = this.getClassName(codename, type, 'admin');
+        const catalogClassName = this.getClassName(codename, type, 'catalog');
+
+        // Admin Controller
+        admin.file(`controller/extension/${type}/${codename}.php`, this.getAdminControllerTemplate(className));
+
+        // Admin Language
+        admin.file(`language/en-gb/extension/${type}/${codename}.php`, this.getLanguageTemplate(this.config.name));
+        admin.file(`language/ru-ru/extension/${type}/${codename}.php`, this.getLanguageTemplate(this.config.name, 'ru'));
+
+        // Admin Model
+        if (this.config.files.admin_model) {
+            admin.file(`model/extension/${type}/${codename}.php`, this.getAdminModelTemplate(className.replace('Controller', 'Model')));
+        }
+
+        // Admin View
+        admin.file(`view/template/extension/${type}/${codename}.twig`, this.getAdminViewTemplate());
+
+        // Catalog
+        if (this.config.files.catalog_controller || this.config.files.catalog_model || this.config.files.catalog_view || this.config.files.catalog_language || this.config.generateEvents || this.config.generateAjax || this.config.files.js || this.config.files.css) {
+            const catalog = upload.folder("catalog");
+
+            // Catalog Controller
+            if (this.config.files.catalog_controller || this.config.generateAjax || this.config.generateEvents) {
+                if (this.config.files.catalog_controller) {
+                    catalog.file(`controller/extension/${type}/${codename}.php`, this.getCatalogControllerTemplate(catalogClassName));
+                }
+                if (this.config.generateAjax) {
+                    catalog.file(`controller/extension/${type}/${codename}_api.php`, this.getAjaxControllerTemplate());
+                }
+                if (this.config.generateEvents) {
+                    catalog.file(`controller/extension/${type}/${codename}_event.php`, this.getEventControllerTemplate());
+                }
+            }
+
+            // Catalog Language
+            if (this.config.files.catalog_language) {
+                catalog.file(`language/en-gb/extension/${type}/${codename}.php`, this.getLanguageTemplate(this.config.name, 'en', 'catalog'));
+                catalog.file(`language/ru-ru/extension/${type}/${codename}.php`, this.getLanguageTemplate(this.config.name, 'ru', 'catalog'));
+            }
+
+            // Catalog Model
+            if (this.config.files.catalog_model) {
+                catalog.file(`model/extension/${type}/${codename}.php`, this.getAdminModelTemplate(catalogClassName.replace('Controller', 'Model')));
+            }
+
+            // Catalog View & Assets
+            if (this.config.files.catalog_view || this.config.files.js || this.config.files.css) {
+                if (this.config.files.catalog_view) {
+                    // Always create default theme file
+                    catalog.file(`view/theme/default/template/extension/${type}/${codename}.twig`, `<!-- ${this.config.name} catalog view -->`);
+
+                    // If custom theme specified, also create file for custom theme
+                    if (hasCustomTheme) {
+                        catalog.file(`view/theme/${themeName}/template/extension/${type}/${codename}.twig`, `<!-- ${this.config.name} catalog view for ${themeName} -->`);
+                    }
+                }
+
+                // Theme type: CSS in view/theme/default/stylesheet/, JS in view/javascript/
+                if (type === 'theme') {
+                    if (this.config.files.css) {
+                        catalog.file(`view/theme/default/stylesheet/${codename}.css`, this.getThemeStylesheetTemplate());
+                    }
+                    if (this.config.files.js) {
+                        catalog.file(`view/javascript/${codename}.js`, `/* ${this.config.name} JS */`);
+                    }
+                } else {
+                    // Other types: JS and CSS in view/javascript/{codename}/
+                    if (this.config.files.js) {
+                        catalog.file(`view/javascript/${codename}/${this.config.jsName}.js`, `/* ${this.config.name} JS */`);
+                    }
+                    if (this.config.files.css) {
+                        catalog.file(`view/javascript/${codename}/${this.config.cssName}.css`, `/* ${this.config.name} CSS */`);
+                    }
+                }
+            }
+        }
+
+        // install.xml
+        if (this.config.files.ocmod) {
+            zip.file("install.xml", this.getOcmodTemplate());
+        }
+
+        const content = await zip.generateAsync({ type: "blob" });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(content);
+        link.download = `${codename}.ocmod.zip`;
+        link.click();
+    },
+
+    getClassName(codename, type, side) {
+        let parts = codename.split('_').map(p => p.charAt(0).toUpperCase() + p.slice(1));
+        let typePart = type.charAt(0).toUpperCase() + type.slice(1);
+        let sidePart = side.charAt(0).toUpperCase() + side.slice(1);
+        return `${sidePart}Extension${typePart}${parts.join('')}`;
+    },
+
+    // Templates
+    getEventControllerTemplate() {
+        const codename = this.config.codename;
+        const type = this.config.type;
+        const className = this.getClassName(codename, type, 'catalog', '_event');
+
+        return `<?php
+class ${className} extends Controller {
+	public function onBeforeHeader(&$route, &$args) {
+		// Event handler logic before header
+	}
+
+	public function onAfterHeader(&$route, &$args, &$output) {
+		// Event handler logic after header
+	}
+}`;
+    },
+
+    getAjaxControllerTemplate() {
+        const codename = this.config.codename;
+        const type = this.config.type;
+        const className = this.getClassName(codename, type, 'catalog', '_api');
+
+        return `<?php
+class ${className} extends Controller {
+	public function index() {
+		$this->load->language('extension/${type}/${codename}');
+
+		$json = array();
+
+		if (isset($this->request->post['data'])) {
+			$json['success'] = true;
+			$json['message'] = 'Success';
+		} else {
+			$json['error'] = 'No data';
+		}
+
+		$this->response->addHeader('Content-Type: application/json');
+		$this->response->setOutput(json_encode($json));
+	}
+}`;
+    },
+
+    getAdminControllerTemplate(className) {
+        const type = this.config.type;
+        const codename = this.config.codename;
+        const isMulti = this.config.isMultiModule;
+
+        return `<?php
+class ${className} extends Controller {
+	private $error = array();
+
+	public function index() {
+		$this->load->language('extension/${type}/${codename}');
+
+		$this->document->setTitle($this->language->get('heading_title'));
+
+		$this->load->model('setting/setting');
+
+		if (($this->request->server['REQUEST_METHOD'] == 'POST') && $this->validate()) {
+			${isMulti ? `if (!isset($this->request->get['module_id'])) {
+				$this->model_setting_module->addModule('${codename}', $this->request->post);
+			} else {
+				$this->model_setting_module->editModule($this->request->get['module_id'], $this->request->post);
+			}` : `$this->model_setting_setting->editSetting('${codename}', $this->request->post);`}
+
+			$this->session->data['success'] = $this->language->get('text_success');
+
+			$this->response->redirect($this->url->link('marketplace/extension', 'user_token=' . $this->session->data['user_token'] . '&type=${type}', true));
+		}
+
+		if (isset($this->error['warning'])) {
+			$data['error_warning'] = $this->error['warning'];
+		} else {
+			$data['error_warning'] = '';
+		}
+
+		$data['breadcrumbs'] = array();
+
+		$data['breadcrumbs'][] = array(
+			'text' => $this->language->get('text_home'),
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['user_token'], true)
+		);
+
+		$data['breadcrumbs'][] = array(
+			'text' => $this->language->get('text_extension'),
+			'href' => $this->url->link('marketplace/extension', 'user_token=' . $this->session->data['user_token'] . '&type=${type}', true)
+		);
+
+		$data['breadcrumbs'][] = array(
+			'text' => $this->language->get('heading_title'),
+			'href' => $this->url->link('extension/${type}/${codename}', 'user_token=' . $this->session->data['user_token'], true)
+		);
+
+		$data['action'] = $this->url->link('extension/${type}/${codename}', 'user_token=' . $this->session->data['user_token'], true);
+
+		$data['cancel'] = $this->url->link('marketplace/extension', 'user_token=' . $this->session->data['user_token'] . '&type=${type}', true);
+
+${this.fields.map(field => {
+            return `		if (isset($this->request->post['${field.key}'])) {
+			$data['${field.key}'] = $this->request->post['${field.key}'];
+		} else {
+			$data['${field.key}'] = $this->config->get('${field.key}');
+		}
+`;
+        }).join('\n')}
+		if (isset($this->request->post['${codename}_status'])) {
+			$data['${codename}_status'] = $this->request->post['${codename}_status'];
+		} else {
+			$data['${codename}_status'] = $this->config->get('${codename}_status');
+		}
+
+		$data['header'] = $this->load->controller('common/header');
+		$data['column_left'] = $this->load->controller('common/column_left');
+		$data['footer'] = $this->load->controller('common/footer');
+
+		$this->response->setOutput($this->load->view('extension/${type}/${codename}', $data));
+	}
+
+	protected function validate() {
+		if (!$this->user->hasPermission('modify', 'extension/${type}/${codename}')) {
+			$this->error['warning'] = $this->language->get('error_permission');
+		}
+
+		return !$this->error;
+	}
+}
+`;
+    },
+
+    getAdminModelTemplate(className) {
+        return `<?php
+class ${className} extends Model {
+	public function install() {
+		// install logic
+	}
+
+	public function uninstall() {
+		// uninstall logic
+	}
+}
+`;
+    },
+
+    getLanguageTemplate(name, lang = 'en', side = 'admin') {
+        const type = this.config.type;
+        const isRu = lang === 'ru';
+
+        // Catalog side language - simpler, with text_title and text_description for payment/shipping
+        if (side === 'catalog') {
+            return this.getCatalogLanguageTemplate(name, lang);
+        }
+
+        // Admin side language
+        const success = isRu ? 'Настройки успешно обновлены!' : 'Success: You have modified the settings!';
+        const error = isRu ? 'У вас нет прав для изменения настроек!' : 'Warning: You do not have permission to modify settings!';
+
+        // Type-specific entries
+        let typeEntries = '';
+        if (type === 'payment') {
+            typeEntries = isRu
+                ? `$_['entry_total']        = 'Минимальная сумма заказа';
+$_['entry_order_status'] = 'Статус заказа';
+$_['entry_geo_zone']     = 'Географическая зона';
+$_['entry_sort_order']   = 'Порядок сортировки';
+
+// Help
+$_['help_total']         = 'Минимальная сумма заказа для активации метода оплаты.';`
+                : `$_['entry_total']        = 'Total';
+$_['entry_order_status'] = 'Order Status';
+$_['entry_geo_zone']     = 'Geo Zone';
+$_['entry_sort_order']   = 'Sort Order';
+
+// Help
+$_['help_total']         = 'The checkout total the order must reach before this payment method becomes active.';`;
+        } else if (type === 'shipping') {
+            typeEntries = isRu
+                ? `$_['entry_cost']       = 'Стоимость';
+$_['entry_tax_class']  = 'Класс налога';
+$_['entry_geo_zone']   = 'Географическая зона';
+$_['entry_sort_order'] = 'Порядок сортировки';`
+                : `$_['entry_cost']       = 'Cost';
+$_['entry_tax_class']  = 'Tax Class';
+$_['entry_geo_zone']   = 'Geo Zone';
+$_['entry_sort_order'] = 'Sort Order';`;
+        }
+
+        return `<?php
+// Heading
+$_['heading_title']    = '${name}';
+
+// Text
+$_['text_extension']   = '${isRu ? 'Расширения' : 'Extensions'}';
+$_['text_success']     = '${success}';
+$_['text_edit']        = '${isRu ? 'Редактировать' : 'Edit'} ${name}';
+
+// Entry
+$_['entry_status']     = '${isRu ? 'Статус' : 'Status'}';
+${typeEntries}
+${this.fields.map(field => {
+            return `$_['entry_${field.key}'] = '${field.name}';`;
+        }).join('\n')}
+
+// Error
+$_['error_permission'] = '${error}';
+`;
+    },
+
+    getCatalogLanguageTemplate(name, lang = 'en') {
+        const type = this.config.type;
+        const isRu = lang === 'ru';
+
+        // Payment and Shipping need text_title and text_description
+        if (type === 'payment' || type === 'shipping') {
+            const titleLabel = isRu ? name : name;
+            const descLabel = isRu
+                ? (type === 'payment' ? 'Описание метода оплаты' : 'Описание метода доставки')
+                : (type === 'payment' ? 'Payment method description' : 'Shipping method description');
+
+            return `<?php
+// Text
+$_['text_title']       = '${titleLabel}';
+$_['text_description'] = '${descLabel}';
+`;
+        }
+
+        // Default catalog language for other types
+        return `<?php
+// Text
+$_['heading_title'] = '${name}';
+`;
+    },
+
+    getAdminViewTemplate() {
+        const codename = this.config.codename;
+        return `{{ header }}{{ column_left }}
+<div id="content">
+  <div class="page-header">
+    <div class="container-fluid">
+      <div class="pull-right">
+        <button type="submit" form="form-module" data-toggle="tooltip" title="{{ button_save }}" class="btn btn-primary"><i class="fa fa-save"></i></button>
+        <a href="{{ cancel }}" data-toggle="tooltip" title="{{ button_cancel }}" class="btn btn-default"><i class="fa fa-reply"></i></a></div>
+      <h1>{{ heading_title }}</h1>
+      <ul class="breadcrumb">
+        {% for breadcrumb in breadcrumbs %}
+        <li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="container-fluid">
+    {% if error_warning %}
+    <div class="alert alert-danger alert-dismissible"><i class="fa fa-exclamation-circle"></i> {{ error_warning }}
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+    {% endif %}
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title"><i class="fa fa-pencil"></i> {{ text_edit }}</h3>
+      </div>
+      <div class="panel-body">
+        <form action="{{ action }}" method="post" enctype="multipart/form-data" id="form-module" class="form-horizontal">
+${this.fields.map(field => {
+            let input = '';
+            if (field.type === 'textarea') {
+                input = `<textarea name="${field.key}" id="input-${field.key}" class="form-control">{{ ${field.key} }}</textarea>`;
+            } else if (field.type === 'select') {
+                input = `<select name="${field.key}" id="input-${field.key}" class="form-control">
+                <option value="1">Option 1</option>
+                <option value="0">Option 2</option>
+              </select>`;
+            } else if (field.type === 'toggle') {
+                input = `<select name="${field.key}" id="input-${field.key}" class="form-control">
+                {% if ${field.key} %}
+                <option value="1" selected="selected">{{ text_enabled }}</option>
+                <option value="0">{{ text_disabled }}</option>
+                {% else %}
+                <option value="1">{{ text_enabled }}</option>
+                <option value="0" selected="selected">{{ text_disabled }}</option>
+                {% endif %}
+              </select>`;
+            } else {
+                input = `<input type="text" name="${field.key}" value="{{ ${field.key} }}" id="input-${field.key}" class="form-control" />`;
+            }
+
+            return `          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-${field.key}">{{ entry_${field.key} }}</label>
+            <div class="col-sm-10">
+              ${input}
+            </div>
+          </div>`;
+        }).join('\n')}
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-status">{{ entry_status }}</label>
+            <div class="col-sm-10">
+              <select name="${codename}_status" id="input-status" class="form-control">
+                {% if ${codename}_status %}
+                <option value="1" selected="selected">{{ text_enabled }}</option>
+                <option value="0">{{ text_disabled }}</option>
+                {% else %}
+                <option value="1">{{ text_enabled }}</option>
+                <option value="0" selected="selected">{{ text_disabled }}</option>
+                {% endif %}
+              </select>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{{ footer }}`;
+    },
+
+    getCatalogControllerTemplate(className) {
+        const codename = this.config.codename;
+        const type = this.config.type;
+        const jsName = this.config.jsName;
+        const cssName = this.config.cssName;
+
+        let assets = '';
+        // Theme type: different asset paths
+        if (type === 'theme') {
+            if (this.config.files.css) {
+                assets += `\t\t$this->document->addStyle('catalog/view/theme/default/stylesheet/${codename}.css');\n`;
+            }
+            if (this.config.files.js) {
+                assets += `\t\t$this->document->addScript('catalog/view/javascript/${codename}.js');\n`;
+            }
+        } else {
+            if (this.config.files.css) {
+                assets += `		$this->document->addStyle('catalog/view/javascript/${codename}/${cssName}.css');\n`;
+            }
+            if (this.config.files.js) {
+                assets += `		$this->document->addScript('catalog/view/javascript/${codename}/${jsName}.js');\n`;
+            }
+        }
+
+        return `<?php
+class ${className} extends Controller {
+	public function index() {
+${assets}
+		$data = array();
+		
+		return $this->load->view('extension/${type}/${codename}', $data);
+	}
+}
+`;
+    },
+
+    getOcmodTemplate() {
+        return `<?xml version="1.0" encoding="utf-8"?>
+<modification>
+	<name>${this.config.name}</name>
+	<code>${this.config.codename}</code>
+	<version>${this.config.version}</version>
+	<author>${this.config.author}</author>
+	<link>https://opencartforum.com.ru/</link>
+
+	<!-- 
+	Пример модификации:
+	<file path="catalog/controller/common/home.php">
+		<operation>
+			<search><![CDATA[$this->document->setTitle(]]></search>
+			<add position="after"><![CDATA[
+			// Ваш код здесь
+			]]></add>
+		</operation>
+	</file>
+	-->
+</modification>`;
+    },
+
+    // Theme-specific templates
+    getThemeStylesheetTemplate() {
+        return `/**
+ * ${this.config.name} Theme Stylesheet
+ * Version: ${this.config.version}
+ * Author: ${this.config.author}
+ */
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
+
+:root {
+    --theme-primary: #2563eb;
+    --theme-secondary: #64748b;
+    --theme-success: #22c55e;
+    --theme-danger: #ef4444;
+    --theme-warning: #f59e0b;
+    --theme-info: #0ea5e9;
+    --theme-light: #f8fafc;
+    --theme-dark: #1e293b;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--theme-dark);
+    background-color: #ffffff;
+}
+
+/* ============================================
+   HEADER STYLES
+   ============================================ */
+
+#header {
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+/* ============================================
+   FOOTER STYLES
+   ============================================ */
+
+footer {
+    background: var(--theme-dark);
+    color: #ffffff;
+    padding: 40px 0;
+}
+
+/* ============================================
+   PRODUCT STYLES
+   ============================================ */
+
+.product-thumb {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.product-thumb:hover {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Add your custom styles below */
+`;
+    },
+
+    getThemeHeaderTemplate() {
+        const name = this.config.name;
+        return `{# ${name} - Header Template #}
+<!DOCTYPE html>
+<html dir="{{ direction }}" lang="{{ lang }}">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>{{ title }}</title>
+<base href="{{ base }}" />
+{% if description %}
+<meta name="description" content="{{ description }}" />
+{% endif %}
+{% if keywords %}
+<meta name="keywords" content="{{ keywords }}" />
+{% endif %}
+{% for link in links %}
+<link href="{{ link.href }}" rel="{{ link.rel }}" />
+{% endfor %}
+{% for style in styles %}
+<link href="{{ style.href }}" type="text/css" rel="{{ style.rel }}" media="{{ style.media }}" />
+{% endfor %}
+{% for script in scripts %}
+<script src="{{ script }}" type="text/javascript"></script>
+{% endfor %}
+{{ analytics }}
+</head>
+<body class="{{ class }}">
+<nav id="top">
+  <div class="container">
+    {{ currency }}
+    {{ language }}
+    <div id="top-links" class="nav pull-right">
+      <ul class="list-inline">
+        <li><a href="{{ contact }}"><i class="fa fa-phone"></i></a> <span class="hidden-xs hidden-sm hidden-md">{{ telephone }}</span></li>
+        <li class="dropdown"><a href="{{ account }}" title="{{ text_account }}" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-user"></i> <span class="hidden-xs hidden-sm hidden-md">{{ text_account }}</span> <span class="caret"></span></a>
+          <ul class="dropdown-menu dropdown-menu-right">
+            {% if logged %}
+            <li><a href="{{ account }}">{{ text_account }}</a></li>
+            <li><a href="{{ order }}">{{ text_order }}</a></li>
+            <li><a href="{{ transaction }}">{{ text_transaction }}</a></li>
+            <li><a href="{{ download }}">{{ text_download }}</a></li>
+            <li><a href="{{ logout }}">{{ text_logout }}</a></li>
+            {% else %}
+            <li><a href="{{ register }}">{{ text_register }}</a></li>
+            <li><a href="{{ login }}">{{ text_login }}</a></li>
+            {% endif %}
+          </ul>
+        </li>
+        <li><a href="{{ wishlist }}" id="wishlist-total" title="{{ text_wishlist }}"><i class="fa fa-heart"></i> <span class="hidden-xs hidden-sm hidden-md">{{ text_wishlist }}</span></a></li>
+        <li><a href="{{ shopping_cart }}" title="{{ text_shopping_cart }}"><i class="fa fa-shopping-cart"></i> <span class="hidden-xs hidden-sm hidden-md">{{ text_shopping_cart }}</span></a></li>
+        <li><a href="{{ checkout }}" title="{{ text_checkout }}"><i class="fa fa-share"></i> <span class="hidden-xs hidden-sm hidden-md">{{ text_checkout }}</span></a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<header>
+  <div class="container">
+    <div class="row">
+      <div class="col-sm-4">
+        <div id="logo">
+          {% if logo %}
+          <a href="{{ home }}"><img src="{{ logo }}" title="{{ name }}" alt="{{ name }}" class="img-responsive" /></a>
+          {% else %}
+          <h1><a href="{{ home }}">{{ name }}</a></h1>
+          {% endif %}
+        </div>
+      </div>
+      <div class="col-sm-5">{{ search }}</div>
+      <div class="col-sm-3">{{ cart }}</div>
+    </div>
+  </div>
+</header>
+{{ menu }}`;
+    },
+
+    getThemeFooterTemplate() {
+        const name = this.config.name;
+        return `{# ${name} - Footer Template #}
+<footer>
+  <div class="container">
+    <div class="row">
+      {% for information in informations %}
+      <div class="col-sm-3">
+        <h5>{{ information.title }}</h5>
+        <ul class="list-unstyled">
+          {% for info in information.info %}
+          <li><a href="{{ info.href }}">{{ info.title }}</a></li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endfor %}
+      <div class="col-sm-3">
+        <h5>{{ text_contact }}</h5>
+        <ul class="list-unstyled">
+          <li><i class="fa fa-map-marker"></i> {{ address }}</li>
+          <li><i class="fa fa-phone"></i> {{ telephone }}</li>
+          {% if fax %}
+          <li><i class="fa fa-fax"></i> {{ fax }}</li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+    <hr />
+    <p>{{ powered }}</p>
+  </div>
+</footer>
+</body>
+</html>`;
+    },
+
+    getThemeHomeTemplate() {
+        const name = this.config.name;
+        return `{# ${name} - Home Page Template #}
+{{ header }}
+<div id="common-home" class="container">
+  <div class="row">{{ column_left }}
+    {% if column_left and column_right %}
+    {% set class = 'col-sm-6' %}
+    {% elseif column_left or column_right %}
+    {% set class = 'col-sm-9' %}
+    {% else %}
+    {% set class = 'col-sm-12' %}
+    {% endif %}
+    <div id="content" class="{{ class }}">{{ content_top }}{{ content_bottom }}</div>
+    {{ column_right }}
+  </div>
+</div>
+{{ footer }}`;
+    }
+};
+
+// Initialize after DOM loaded
+document.addEventListener('DOMContentLoaded', () => {
+    Generator.init();
+});
+
+// Expose to window
+window.switchMode = (mode) => Generator.switchMode(mode);
+window.updateUI = () => Generator.updateUI();
+window.generateModule = () => Generator.generateModule();
+window.addField = (type) => Generator.addField(type);
+window.removeField = (id) => Generator.removeField(id);
+window.updateField = (id, key, value) => Generator.updateField(id, key, value);
+window.selectPreviewFile = (file, btn) => Generator.selectPreviewFile(file, btn);
+window.loadDemoFields = () => Generator.loadDemoFields();
