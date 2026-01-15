@@ -550,14 +550,23 @@
                             <div class="mb-3">
                                 <label class="form-label-custom">Название модуля (отображаемое):</label>
                                 <input type="text" class="form-control form-control-custom" id="moduleName"
-                                    placeholder="Например: Супер Баннер" oninput="updateUI()">
+                                    placeholder="Например: Доставка до двери" oninput="onModuleNameInput()">
+                            </div>
+
+                            <div class="mb-3" id="moduleDescriptionGroup" style="display: none;">
+                                <label class="form-label-custom">Описание модуля:</label>
+                                <input type="text" class="form-control form-control-custom" id="moduleDescription"
+                                    placeholder="Краткое описание метода оплаты/доставки" oninput="updateUI()">
+                                <small class="text-muted">Отображается покупателю при выборе способа
+                                    оплаты/доставки</small>
                             </div>
 
                             <div class="mb-3">
                                 <label class="form-label-custom">Кодовое имя (codename):</label>
                                 <input type="text" class="form-control form-control-custom" id="moduleCode"
-                                    placeholder="Например: super_banner" oninput="updateUI()">
-                                <small class="text-muted">Только латиница, цифры и подчеркивание</small>
+                                    placeholder="Генерируется автоматически" oninput="onCodenameInput()">
+                                <small class="text-muted">Только латиница, цифры и подчеркивание. Генерируется
+                                    автоматически из названия.</small>
                             </div>
 
                             <div class="row">
@@ -622,15 +631,6 @@
                             </h5>
 
                             <div class="option-group">
-                                <span class="option-group-label">Общие</span>
-                                <label class="custom-checkbox-item">
-                                    <input type="checkbox" id="createOcmod" checked onchange="updateUI()">
-                                    <div class="checkbox-box"></div>
-                                    <span class="checkbox-label">Модификатор (install.xml)</span>
-                                </label>
-                            </div>
-
-                            <div class="option-group">
                                 <span class="option-group-label">Админка (Admin)</span>
                                 <label class="custom-checkbox-item">
                                     <input type="checkbox" id="createAdminModel" checked onchange="updateUI()">
@@ -646,24 +646,27 @@
                                 <div class="row">
                                     <div class="col-6">
                                         <label class="custom-checkbox-item">
-                                            <input type="checkbox" id="createCatalogController" onchange="updateUI()">
+                                            <input type="checkbox" id="createCatalogController" checked
+                                                onchange="updateUI()">
                                             <div class="checkbox-box"></div>
                                             <span class="checkbox-label">Контроллер</span>
                                         </label>
                                         <label class="custom-checkbox-item">
-                                            <input type="checkbox" id="createCatalogModel" onchange="updateUI()">
+                                            <input type="checkbox" id="createCatalogModel" checked
+                                                onchange="updateUI()">
                                             <div class="checkbox-box"></div>
                                             <span class="checkbox-label">Модель</span>
                                         </label>
                                     </div>
                                     <div class="col-6">
                                         <label class="custom-checkbox-item">
-                                            <input type="checkbox" id="createCatalogView" onchange="updateUI()">
+                                            <input type="checkbox" id="createCatalogView" checked onchange="updateUI()">
                                             <div class="checkbox-box"></div>
                                             <span class="checkbox-label">Шаблон (Twig)</span>
                                         </label>
                                         <label class="custom-checkbox-item">
-                                            <input type="checkbox" id="createCatalogLanguage" onchange="updateUI()">
+                                            <input type="checkbox" id="createCatalogLanguage" checked
+                                                onchange="updateUI()">
                                             <div class="checkbox-box"></div>
                                             <span class="checkbox-label">Язык</span>
                                         </label>
@@ -672,8 +675,15 @@
                             </div>
 
                             <div class="option-group mb-0">
-                                <span class="option-group-label">Ресурсы</span>
+                                <span class="option-group-label">Экстра-файлы (Extra Files)</span>
                                 <div class="row">
+                                    <div class="col-12">
+                                        <label class="custom-checkbox-item">
+                                            <input type="checkbox" id="createOcmod" onchange="updateUI()">
+                                            <div class="checkbox-box"></div>
+                                            <span class="checkbox-label">Модификатор (install.xml)</span>
+                                        </label>
+                                    </div>
                                     <div class="col-6">
                                         <label class="custom-checkbox-item">
                                             <input type="checkbox" id="createJs" onchange="updateUI()">
